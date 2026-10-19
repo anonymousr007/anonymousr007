@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-black text-slate-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>anonymousr007 | Terminal System Portal</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        metal: {
+                            950: '#030305',
+                            900: '#0a0a0e',
+                            800: '#121217',
+                            700: '#1c1c24',
+                            600: '#2a2a36',
+                            300: '#8e8e9e',
+                            100: '#f0f0f5',
+                        }
+                    },
+                    fontFamily: {
+                        mono: ['JetBrains Mono', 'Fira Code', 'Courier New', 'monospace'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                    keyframes: {
+                        blink: {
+                            '0%, 100%': { opacity: '1' },
+                            '50%': { opacity: '0' },
+                        },
+                        scanline: {
+                            '0%': { transform: 'translateY(-100%)' },
+                            '100%': { transform: 'translateY(1000%)' },
+                        }
+                    },
+                    animation: {
+                        'cursor-blink': 'blink 1s step-start infinite',
+                        'scanline': 'scanline 8s linear infinite',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@200;300;400;500;600&family=JetBrains+Mono:wght@300;400;500;700&display=swap');
+
+        /* Deep Metal Black Background Gradients */
+        .bg-metal-radial {
+            background: radial-gradient(circle at 50% 20%, #0d0d12 0%, #050507 65%, #000000 100%);
+        }
+        
+        .metal-card {
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.03) 0%, rgba(255, 255, 255, 0.005) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 20px 50px rgba(0, 0, 0, 0.95), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(16px);
+        }
+
+        .metal-card:hover {
+            border-color: rgba(255, 255, 255, 0.18);
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 1), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+        }
+
+        .metal-glow-text {
+            background: linear-gradient(180deg, #FFFFFF 0%, #A1A1AA 50%, #3F3F46 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .terminal-glow {
+            text-shadow: 0 0 12px rgba(255, 255, 255, 0.3);
+        }
+
+        /* Canvas Overlay */
+        #terminal-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        /* Scanline CRT overlay */
+        .scanlines {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 2;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%);
+            background-size: 100% 4px;
+            opacity: 0.4;
+        }
+
+        /* Custom Scrollbar */
+        ::-webkit-scrollbar {
+            width: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #000000;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #1c1c24;
+            border-radius: 2px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #2a2a36;
+        }
+    </style>
+</head>
+<body class="h-full bg-metal-radial text-slate-300 font-mono antialiased selection:bg-zinc-800 selection:text-white flex flex-col justify-between overflow-x-hidden relative">
+
+    <!-- Background Interactive Canvas -->
+    <canvas id="terminal-canvas"></canvas>
+
+    <!-- Subtle CRT Scanlines -->
+    <div class="scanlines"></div>
+
+    <!-- Navigation Header -->
+    <header class="relative z-10 w-full max-w-7xl mx-auto px-6 py-6 flex justify-between items-center border-b border-zinc-900/80 bg-black/40 backdrop-blur-md">
+        <div class="flex items-center space-x-3 cursor-pointer group" onclick="scrollToTop()">
+            <div class="w-8 h-8 rounded bg-zinc-900 border border-zinc-700 flex items-center justify-center shadow-lg group-hover:border-zinc-500 transition-colors">
+                <span class="font-mono font-bold text-xs text-zinc-100">&gt;_</span>
+            </div>
+            <div class="flex flex-col">
+                <span class="font-mono font-bold text-sm tracking-wider text-zinc-200">
+                    anonymousr007
+                </span>
+                <span class="text-[10px] text-zinc-500 tracking-widest font-mono">SYS_VER // 4.0.9</span>
+            </div>
+        </div>
+
+        <!-- Terminal Quick Links -->
+        <nav class="hidden md:flex items-center space-x-8 text-xs tracking-widest uppercase font-mono text-zinc-400">
+            <a href="#console" class="hover:text-white transition-colors flex items-center gap-1.5">
+                <span class="text-zinc-600">&gt;</span> [01] Terminal
+            </a>
+            <a href="#architecture" class="hover:text-white transition-colors flex items-center gap-1.5">
+                <span class="text-zinc-600">&gt;</span> [02] Protocols
+            </a>
+            <a href="#transmission" class="hover:text-white transition-colors flex items-center gap-1.5">
+                <span class="text-zinc-600">&gt;</span> [03] Transmission
+            </a>
+        </nav>
+
+        <div class="flex items-center space-x-3">
+            <div id="connection-status" class="flex items-center space-x-2 text-[11px] font-mono text-zinc-400 px-3 py-1 rounded bg-zinc-950 border border-zinc-800">
+                <span class="w-2 h-2 rounded-full bg-zinc-200 animate-pulse"></span>
+                <span class="hidden sm:inline text-zinc-500">STATUS:</span> 
+                <span class="text-zinc-200 font-semibold uppercase tracking-wider">ONLINE</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Terminal Content -->
+    <main class="relative z-10 max-w-6xl mx-auto px-6 py-12 flex-1 w-full space-y-16">
+        
+        <!-- Hero Section / Main Shell Display -->
+        <section class="space-y-8 pt-4">
+            
+            <div class="text-center space-y-4">
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded border border-zinc-800 bg-zinc-950/80 text-[11px] font-mono text-zinc-400">
+                    <i data-lucide="shield" class="w-3.5 h-3.5 text-zinc-300"></i>
+                    <span>AUTHENTICATED ENCRYPTED NODE</span>
+                </div>
+
+                <h1 class="text-5xl sm:text-7xl md:text-8xl font-black tracking-tight metal-glow-text font-mono uppercase terminal-glow py-2">
+                    anonymousr007
+                </h1>
+
+                <p class="text-sm sm:text-base font-sans text-zinc-400 max-w-2xl mx-auto leading-relaxed">
+                    Formal cryptographic infrastructure, sovereign system telemetry, and high-security network command architecture.
+                </p>
+            </div>
+
+            <!-- Terminal Interactive Console Window -->
+            <div id="console" class="metal-card rounded-lg overflow-hidden border border-zinc-800 shadow-2xl">
+                <!-- Window Header bar -->
+                <div class="bg-zinc-950/90 border-b border-zinc-800 px-4 py-2.5 flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <span class="w-3 h-3 rounded-full bg-zinc-800 inline-block border border-zinc-700"></span>
+                        <span class="w-3 h-3 rounded-full bg-zinc-800 inline-block border border-zinc-700"></span>
+                        <span class="w-3 h-3 rounded-full bg-zinc-800 inline-block border border-zinc-700"></span>
+                        <span class="text-xs text-zinc-500 ml-2 font-mono">root@anonymousr007:~#</span>
+                    </div>
+                    <div class="text-[10px] text-zinc-600 font-mono tracking-widest uppercase hidden sm:block">
+                        TTY_NODE_01 // SECURE SESSION
+                    </div>
+                </div>
+
+                <!-- Console Output Display -->
+                <div id="terminal-body" class="p-5 sm:p-6 text-xs sm:text-sm font-mono space-y-3 min-h-[260px] max-h-[380px] overflow-y-auto bg-black/60">
+                    <div class="text-zinc-500">[SYSTEM INIT] Initializing secure handshake with domain <span class="text-zinc-300">anonymousr007.com</span>...</div>
+                    <div class="text-zinc-500">[SYSTEM INFO] Cryptographic identity verified. Zero-trust parameters loaded.</div>
+                    <div class="text-zinc-300">Welcome to the formal interactive gateway for <span class="text-white font-bold">anonymousr007</span>.</div>
+                    <div class="text-zinc-400">Type <span class="text-zinc-100 bg-zinc-800 px-1.5 py-0.5 rounded font-mono">help</span> to view available system routines or enter commands below.</div>
+                    <div id="command-history" class="space-y-2"></div>
+                </div>
+
+                <!-- Console Input Prompt Bar -->
+                <form id="terminal-form" onsubmit="handleCommand(event)" class="border-t border-zinc-800 bg-zinc-950/90 px-4 py-3 flex items-center gap-2">
+                    <span class="text-zinc-100 font-bold font-mono">&gt;</span>
+                    <input type="text" id="terminal-input" autocomplete="off" spellcheck="false" placeholder="Enter command (e.g. help, status, clear, info)..." class="w-full bg-transparent text-xs sm:text-sm text-zinc-100 placeholder-zinc-600 focus:outline-none font-mono">
+                    <button type="submit" class="px-3 py-1 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono border border-zinc-600/50 transition-colors">
+                        EXECUTE
+                    </button>
+                </form>
+            </div>
+
+        </section>
+
+        <!-- System Architecture & Telemetry Section -->
+        <section id="architecture" class="space-y-8 pt-6">
+            <div class="flex items-center justify-between border-b border-zinc-800/80 pb-4">
+                <div>
+                    <h2 class="text-xs font-mono uppercase tracking-widest text-zinc-500">// ARCHITECTURE</h2>
+                    <p class="text-xl font-bold text-zinc-100 font-sans mt-0.5">Sovereign Security Framework</p>
+                </div>
+                <div class="hidden sm:block text-xs font-mono text-zinc-500">SYSTEM STATS: OPTIMAL</div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Module 1 -->
+                <div class="metal-card p-6 rounded-lg space-y-3">
+                    <div class="w-10 h-10 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200">
+                        <i data-lucide="terminal-square" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-zinc-100 font-sans">Formal Telemetry Isolation</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed font-sans">
+                        Isolated communication layers designed to withstand external inspection and provide complete metadata anonymization.
+                    </p>
+                    <div class="pt-2 text-[10px] font-mono text-zinc-500 border-t border-zinc-900">
+                        STATUS: ACTIVE [256-BIT AES]
+                    </div>
+                </div>
+
+                <!-- Module 2 -->
+                <div class="metal-card p-6 rounded-lg space-y-3">
+                    <div class="w-10 h-10 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200">
+                        <i data-lucide="cpu" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-zinc-100 font-sans">Asynchronous Micro-Routines</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed font-sans">
+                        Zero-latency compute pipeline optimized for resilient response dispatching and real-time network interactions.
+                    </p>
+                    <div class="pt-2 text-[10px] font-mono text-zinc-500 border-t border-zinc-900">
+                        THROUGHPUT: 10.4 GB/S
+                    </div>
+                </div>
+
+                <!-- Module 3 -->
+                <div class="metal-card p-6 rounded-lg space-y-3">
+                    <div class="w-10 h-10 rounded bg-zinc-900 border border-zinc-800 flex items-center justify-center text-zinc-200">
+                        <i data-lucide="lock" class="w-5 h-5"></i>
+                    </div>
+                    <h3 class="text-base font-semibold text-zinc-100 font-sans">Hardened Protocol Standards</h3>
+                    <p class="text-xs text-zinc-400 leading-relaxed font-sans">
+                        Enforced cryptographic signatures across all entry vectors ensuring absolute data integrity and identity verification.
+                    </p>
+                    <div class="pt-2 text-[10px] font-mono text-zinc-500 border-t border-zinc-900">
+                        PROTOCOL: TLS v1.3 STRICT
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Formal Transmission / Dispatch Section -->
+        <section id="transmission" class="max-w-3xl mx-auto pt-6">
+            <div class="metal-card p-6 sm:p-10 rounded-lg space-y-6">
+                <div class="border-b border-zinc-800 pb-4 text-center space-y-1">
+                    <h2 class="text-lg font-bold text-zinc-100 font-sans">Formal Communication Dispatch</h2>
+                    <p class="text-xs text-zinc-500">Route encrypted transmissions directly to anonymousr007 endpoints.</p>
+                </div>
+
+                <form id="contactForm" onsubmit="handleFormSubmit(event)" class="space-y-5">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-5">
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] text-zinc-400 uppercase tracking-wider font-mono">IDENTIFIER [NAME]</label>
+                            <input type="text" required placeholder="Enter origin identifier..." class="w-full bg-zinc-950 border border-zinc-800 rounded px-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono transition-colors">
+                        </div>
+                        <div class="space-y-1.5">
+                            <label class="block text-[11px] text-zinc-400 uppercase tracking-wider font-mono">ENDPOINT [EMAIL]</label>
+                            <input type="email" required placeholder="origin@domain.com" class="w-full bg-zinc-950 border border-zinc-800 rounded px-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono transition-colors">
+                        </div>
+                    </div>
+
+                    <div class="space-y-1.5">
+                        <label class="block text-[11px] text-zinc-400 uppercase tracking-wider font-mono">TRANSMISSION PAYLOAD</label>
+                        <textarea rows="4" required placeholder="State your formal query or message..." class="w-full bg-zinc-950 border border-zinc-800 rounded px-3.5 py-2.5 text-xs text-zinc-200 placeholder-zinc-600 focus:outline-none focus:border-zinc-500 font-mono transition-colors resize-none"></textarea>
+                    </div>
+
+                    <button type="submit" id="submit-btn" class="w-full py-3 rounded bg-zinc-100 hover:bg-white text-black font-semibold text-xs transition-all flex items-center justify-center space-x-2 font-mono">
+                        <i data-lucide="send" class="w-4 h-4"></i>
+                        <span>DISPATCH TRANSMISSION</span>
+                    </button>
+                </form>
+
+                <div id="form-feedback" class="hidden p-3 rounded bg-zinc-950 border border-zinc-800 text-center text-xs text-zinc-300 font-mono">
+                    &gt; TRANSMISSION ENCRYPTED & DISPATCHED SUCCESSFULLY.
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="relative z-10 w-full border-t border-zinc-900 bg-black/80 backdrop-blur-md py-6 px-6 text-center text-xs font-mono text-zinc-600">
+        <div class="max-w-7xl mx-auto flex flex-col sm:flex-row justify-between items-center gap-4">
+            <div>
+                &copy; 2026 <span class="text-zinc-400">anonymousr007</span>. Formal Systems. All Rights Reserved.
+            </div>
+            <div class="flex items-center space-x-6 text-zinc-500">
+                <button onclick="copyDomain()" class="hover:text-zinc-200 transition-colors uppercase tracking-wider text-[11px]">Copy Domain</button>
+                <span>|</span>
+                <span class="text-zinc-600">HEX: 0x616e6f6e</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        document.addEventListener("DOMContentLoaded", () => {
+            lucide.createIcons();
+            initMatrixBackground();
+        });
+
+        // Smooth Scrolling helper
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Copy Domain Clipboard logic
+        function copyDomain() {
+            const domain = 'anonymousr007.com';
+            const tempInput = document.createElement('input');
+            tempInput.value = domain;
+            document.body.appendChild(tempInput);
+            tempInput.select();
+            document.execCommand('copy');
+            document.body.removeChild(tempInput);
+
+            const status = document.getElementById('connection-status');
+            const originalHTML = status.innerHTML;
+            status.innerHTML = `<span class="text-zinc-100 font-bold">&gt; COPIED TO CLIPBOARD</span>`;
+            setTimeout(() => {
+                status.innerHTML = originalHTML;
+            }, 2500);
+        }
+
+        // Terminal Command Processing Logic
+        function handleCommand(e) {
+            e.preventDefault();
+            const input = document.getElementById('terminal-input');
+            const history = document.getElementById('command-history');
+            const cmd = input.value.trim().toLowerCase();
+            if (!cmd) return;
+
+            // Echo input
+            const userLine = document.createElement('div');
+            userLine.className = 'text-zinc-200 font-mono font-bold flex items-center gap-1.5';
+            userLine.innerHTML = `<span class="text-zinc-500">&gt;</span> <span>${escapeHtml(input.value)}</span>`;
+            history.appendChild(userLine);
+
+            // Response Container
+            const responseLine = document.createElement('div');
+            responseLine.className = 'text-zinc-400 pl-4 border-l border-zinc-800 font-mono text-xs space-y-1 mb-3';
+
+            switch (cmd) {
+                case 'help':
+                    responseLine.innerHTML = `
+                        <div>Available commands:</div>
+                        <div class="text-zinc-300 ml-2">&bull; <span class="font-bold">info</span> - Display domain overview and identity</div>
+                        <div class="text-zinc-300 ml-2">&bull; <span class="font-bold">status</span> - Check server & network diagnostics</div>
+                        <div class="text-zinc-300 ml-2">&bull; <span class="font-bold">clear</span> - Clear the terminal output console</div>
+                        <div class="text-zinc-300 ml-2">&bull; <span class="font-bold">contact</span> - Scroll down to the transmission form</div>
+                        <div class="text-zinc-300 ml-2">&bull; <span class="font-bold">matrix</span> - Toggle matrix rain density</div>
+                    `;
+                    break;
+                case 'info':
+                    responseLine.innerHTML = `
+                        <div><span class="text-zinc-200 font-bold">Domain:</span> anonymousr007.com</div>
+                        <div><span class="text-zinc-200 font-bold">Purpose:</span> Elegant formal terminal & secure gateway</div>
+                        <div><span class="text-zinc-200 font-bold">Architecture:</span> Single-page metal black styling</div>
+                    `;
+                    break;
+                case 'status':
+                    responseLine.innerHTML = `
+                        <div>[DIAGNOSTICS] System status operating at peak optimal capacity.</div>
+                        <div>[LATENCY] 11ms | [ENCRYPTION] AES-256-GCM | [NODE] OK</div>
+                    `;
+                    break;
+                case 'clear':
+                    history.innerHTML = '';
+                    input.value = '';
+                    return;
+                case 'contact':
+                    responseLine.innerHTML = `<div>Navigating to transmission portal...</div>`;
+                    document.getElementById('transmission').scrollIntoView({ behavior: 'smooth' });
+                    break;
+                default:
+                    responseLine.innerHTML = `<span class="text-zinc-500">Command not recognized: "${escapeHtml(cmd)}". Type <span class="text-zinc-200">help</span> for assistance.</span>`;
+            }
+
+            history.appendChild(responseLine);
+            input.value = '';
+
+            // Auto-scroll terminal body
+            const body = document.getElementById('terminal-body');
+            body.scrollTop = body.scrollHeight;
+        }
+
+        function escapeHtml(text) {
+            return text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+        }
+
+        // Form Submission Handling
+        function handleFormSubmit(e) {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            const feedback = document.getElementById('form-feedback');
+
+            btn.disabled = true;
+            btn.innerHTML = `<span>ENCRYPTING TRANSMISSION...</span>`;
+
+            setTimeout(() => {
+                btn.disabled = false;
+                btn.innerHTML = `<i data-lucide="check" class="w-4 h-4"></i><span>DISPATCHED</span>`;
+                feedback.classList.remove('hidden');
+                e.target.reset();
+                lucide.createIcons();
+
+                setTimeout(() => {
+                    btn.innerHTML = `<i data-lucide="send" class="w-4 h-4"></i><span>DISPATCH TRANSMISSION</span>`;
+                    feedback.classList.add('hidden');
+                    lucide.createIcons();
+                }, 4000);
+            }, 1200);
+        }
+
+        // Elegant Metal Black Rain Canvas Simulation
+        function initMatrixBackground() {
+            const canvas = document.getElementById('terminal-canvas');
+            const ctx = canvas.getContext('2d');
+
+            let width = canvas.width = window.innerWidth;
+            let height = canvas.height = window.innerHeight;
+
+            window.addEventListener('resize', () => {
+                width = canvas.width = window.innerWidth;
+                height = canvas.height = window.innerHeight;
+            });
+
+            const chars = '01ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789$%#@&*';
+            const fontSize = 12;
+            const columns = Math.floor(width / fontSize);
+            const drops = Array.from({ length: columns }, () => Math.floor(Math.random() * -100));
+
+            function draw() {
+                // Subtle fade background for trail effect in metal black
+                ctx.fillStyle = 'rgba(3, 3, 5, 0.12)';
+                ctx.fillRect(0, 0, width, height);
+
+                ctx.fillStyle = 'rgba(180, 180, 200, 0.15)'; // Monochromatic metal drop tint
+                ctx.font = `${fontSize}px JetBrains Mono, monospace`;
+
+                for (let i = 0; i < drops.length; i++) {
+                    const text = chars[Math.floor(Math.random() * chars.length)];
+                    const x = i * fontSize;
+                    const y = drops[i] * fontSize;
+
+                    ctx.fillText(text, x, y);
+
+                    if (y > height && Math.random() > 0.975) {
+                        drops[i] = 0;
+                    }
+                    drops[i]++;
+                }
+
+                requestAnimationFrame(draw);
+            }
+
+            draw();
+        }
+    </script>
+</body>
+</html>
